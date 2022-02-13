@@ -1,0 +1,117 @@
+{
+  "builders": [
+    {
+      "cluster": "DC04-VC04-Cluster14",
+      "communicator": "winrm",
+      "convert_to_template": "false",
+      "cpus": "2",
+      "datastore": "DC04_VC04_C14_13",
+      "host": "dc04p10esx011.phx.sf.priv",
+      "disk_controller_type": "pvscsi",
+      "shutdown_command": "A:/packer-shutdown.bat",
+      "shutdown_timeout": "25m",
+      "floppy_files": [
+        "setup/2012r2DC/Autounattend.xml",
+        "setup/pvscsi.cat",
+        "setup/pvscsi.inf",
+        "setup/pvscsi.sys",
+        "setup/txtsetup.oem",
+        "setup/staticip.bat",
+        "setup/setup.ps1",
+        "setup/vmtools_2012_r2.bat",
+        "setup/packer-shutdown.bat",
+        "setup/postinstall.xml",
+        "setup/wsus_update.bat",
+        "setup/wsus_remove.bat",
+        "setup/postinstall.xml",
+        "setup/winrm_2012_r2.ps1"
+      ],
+      "remove_cdrom": "true",
+      "guest_os_type": "windows8Server64Guest",
+      "insecure_connection": "true",
+      "iso_paths": [
+        "[DC04_TEMPLATE_01] ISOs/en_windows_server_2012_r2_with_update_x64_dvd_6052708.iso",
+        "[DC04_TEMPLATE_01] ISOs/VMwareTools.iso"
+      ],
+      "network_adapters": [
+        {
+          "network": "MGMT-SVCS_198",
+          "mac_address": "00:50:56:84:23:0f",
+          "network_card": "vmxnet3"
+        }
+      ],
+      "password": "9Ym6+b$Hd",
+      "ram": "4096",
+      "storage": [
+        {
+          "disk_size": "51600",
+          "disk_thin_provisioned": true
+        }
+      ],
+      "type": "vsphere-iso",
+      "username": "svc_aut_bld@sfdc",
+      "vcenter_server": "dc04vmvc04",
+      "vm_name": "manjesh-Win2012_r2_DC",
+      "winrm_password": "opsadmin",
+      "winrm_username": "opsadmin",
+      "winrm_insecure": true
+    }
+  ],
+"provisioners": [ 
+    {
+      "type": "windows-shell",
+      "inline": [ "a:\\wsus_update.bat" ]
+    },
+    {
+      "type": "file",
+      "source": "setup/Microsoft.PackageManagement.NuGetProvider.dll",
+      "destination": "c:/windows/Temp/"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/configure-features.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/upgrade_powershell_2012.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "shell-local",
+      "inline": [ "echo", "echo pausing 8 minutes for powershell update to complete", "echo", "sleep 480" ]
+    }, 
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/install_ansible_win2012updates.sh"
+    },
+    {
+      "type": "windows-restart",
+      "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\"",
+      "restart_timeout": "20m"
+    },
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/install_ansible_Apps.sh"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/after-reboot.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "windows-shell",
+      "inline": [ "a:\\wsus_remove.bat" ]
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/cleanup.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    }
+  ]
+}
+

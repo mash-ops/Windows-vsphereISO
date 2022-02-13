@@ -1,0 +1,116 @@
+{
+  "builders": [
+    {
+      "cluster": "DC04-VC04-Cluster14",
+      "communicator": "winrm",
+      "convert_to_template": "true",
+      "cpus": "2",
+      "datastore": "DC04_VC04_C14_13",
+      "host": "dc04p10esx011.phx.sf.priv",
+      "disk_controller_type": "lsilogic-sas",
+      "shutdown_command": "A:/packer-shutdown.bat",
+      "shutdown_timeout": "25m",
+      "floppy_files": [
+        "setup/autounattend.xml",
+        "setup/staticip.bat",
+        "setup/setup.ps1",
+        "setup/vmtools.cmd",
+        "setup/packer-shutdown.bat",
+        "setup/postinstall.xml",
+        "scripts/ConfigureRemotingForAnsible.ps1",
+        "setup/winrm.ps1"
+      ],
+      "guest_os_type": "windows9Server64Guest",
+      "insecure_connection": "true",
+      "iso_paths": [
+        "[DC04_TEMPLATE_01] ISOs/en_windows_server_2016_x64_dvd_9718492.iso",
+        "[DC04_TEMPLATE_01] ISOs/VMwareTools.iso"
+      ],
+      "network_adapters": [
+        {
+          "network": "MGMT-SVCS_198",
+          "network_card": "vmxnet3",
+          "mac_address": "00:50:56:84:CC:04"
+        }
+      ],
+      "password": "9Ym6+b$Hd",
+      "ram": "4096",
+      "storage": [
+        {
+          "disk_size": "50000",
+          "disk_thin_provisioned": true
+        }
+      ],
+      "type": "vsphere-iso",
+      "username": "svc_aut_bld@sfdc",
+      "vcenter_server": "dc04vmvc04",
+      "vm_name": "manjesh-Win2016",
+      "export": { "force": true,
+                  "output_directory": "./output_vsphere"
+                },
+      "winrm_password": "opsadmin",
+      "winrm_username": "opsadmin",
+      "winrm_insecure": true,
+      "ip_settle_timeout": "120s",
+      "ip_wait_address": "10.4.198.0/24"
+    }
+  ],
+"provisioners": [ 
+    {
+      "type": "file",
+      "source": "setup/Microsoft.PackageManagement.NuGetProvider.dll",
+      "destination": "c:/windows/Temp/"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/configure-features.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/upload_updates.sh"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/windows-updates.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/install_ansible_winupdates1.sh"
+    },
+    {
+      "type": "windows-restart",
+      "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\"",
+      "restart_timeout": "20m"
+    },
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/install_ansible_winupdates2.sh"
+    },
+    {
+      "type": "windows-restart",
+      "restart_check_command": "powershell -command \"& {Write-Output 'restarted.'}\"",
+      "restart_timeout": "20m"
+    },
+    {
+      "type": "shell-local",
+      "script": "/build/scripts/manjesh/vsphereISO/install_ansible_Apps.sh"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/after-reboot.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    },
+    {
+      "type": "powershell",
+      "script": "scripts/cleanup.ps1",
+      "elevated_user": "opsadmin",
+      "elevated_password": "opsadmin"
+    }
+  ]
+}
+

@@ -1,0 +1,28 @@
+---
+
+- hosts: all
+  gather_facts: no
+
+  tasks:
+
+  - win_copy:
+      src: '/build/scripts/manjesh/vsphereISO/Winupdate2016/'
+      dest: 'C:/windows/temp/'
+
+#  - win_command: wusa.exe C:\windows\temp\windows10.0-kb4103720-x64_c1fb7676d38fffae5c28b9216220c1f033ce26ac.msu
+
+#  - win_command: whoami.exe
+
+#  - win_command: powershell.exe -ExecutionPolicy ByPass -File C:/windows/temp/Update.ps1
+
+  - win_hotfix:
+      #source: C:/Windows/Temp/windows10.0-kb4494175-v4-x64_0c5c4661550ea6ed7a1405711f19708f6a36609e.msu
+      source: C:/Windows/Temp/{{ item }}
+      state: present
+    with_items: 
+      - windows10.0-kb4494175-v4-x64_0c5c4661550ea6ed7a1405711f19708f6a36609e.msu
+      - windows10.0-kb4562561-x64_f9a27668c8727deb0bc6645916eb6197d51f4358.msu
+      - windows10.0-kb4103720-x64_c1fb7676d38fffae5c28b9216220c1f033ce26ac.msu
+      - windows10.0-kb4561616-x64_0026760a6c77d1a8113855bd853f3c2ea22ada84.msu
+    register: hotfix_install
+
